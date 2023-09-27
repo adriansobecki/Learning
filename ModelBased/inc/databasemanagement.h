@@ -1,13 +1,21 @@
 #pragma once
 #include <QtSql/QSqlDatabase>
 #include <map>
+#include <QVariantList>
 
 class SingleTableDatabase
 {
 public:
+    struct QueryExecutionResult
+    {
+        bool queryExecutionResult { false };
+        QVariantList data;
+    };
+
     ~SingleTableDatabase();
 
-    QVariantList executeQuery(QString query);
+    SingleTableDatabase::QueryExecutionResult executeQuery(QString query);
+
     QString getColumnName(int index) const { return columnIndexToString.at(index); };
 
     int getNumberOfRows() const { return numberOfRows; };

@@ -2,15 +2,17 @@
 #include "databasemanagement.h"
 #include <QColor>
 #include <QSize>
+#include <QString>
+#include <QtSql/QSqlQuery>
 
 ListModel::ListModel(QObject *parent): QAbstractListModel(parent)
 {
-    database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
+    this->database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 }
 
 int ListModel::rowCount(const QModelIndex &parent) const
 {
-    return database->getNumberOfRows();
+    return this->database->getNumberOfRows();
 }
 
 QVariant ListModel::data(const QModelIndex &index, int role) const
@@ -19,13 +21,10 @@ QVariant ListModel::data(const QModelIndex &index, int role) const
 
     if (role == Qt::DisplayRole || role == Qt::EditRole)
     {
-        QVariantList data = database->executeQuery(QString("SELECT * FROM (SELECT id, first_name, last_name, email, gender, row_number()") +
+        SingleTableDatabase::QueryExecutionResult result = database->executeQuery(QString("SELECT * FROM (SELECT id, first_name, last_name, email, gender, row_number()") +
                                                    QString(" OVER (order by id) AS row_num FROM users) t WHERE row_num = %1").arg(index.row() + 1));
-
-        //QVariantList data = database->executeQuery(QString("SELECT * FROM users WHERE ID = %1").arg(index.row()));
-        //qDebug() << data;
-
-        if(data.isEmpty() == false) return data.first();
+        
+        if(result.queryExecutionResult == true && result.data.isEmpty() == false) return result.data.first();
     }
     else if(role == Qt::BackgroundRole )
     {
@@ -67,4 +66,47 @@ bool ListModel::setData(const QModelIndex &index, const QVariant &value, int rol
     }
 
     return false;
+}
+
+void ListModel::addRow(QList<QString> data)
+{
+    QString columns, values;
+    
+    for(int columnNumber = 0; columnNumber < this->database->getNumberOfColumns(); columnNumber++)
+    {
+        if(columns.isEmpty() == true) columns = QString("'%1'").arg(database->getColumnName(columnNumber));
+        else columns = QString("%1, '%2'").arg(columns).arg(database->getColumnName(columnNumber));
+
+        if(values.isEmpty() == true) values = QString("'%1'").arg(data[columnNumber]);
+        else values = QString("%1, '%2'").arg(values).arg(data[columnNumber]);
+    }
+
+    QString query = QString("INSERT INTO Users (%1) VALUES (%2);").arg(columns).arg(values);
+
+    beginInsertRows(QModelIndex(), data[0].toInt(), data[0].toInt());
+
+    database->executeQuery(query);
+
+    endInsertRows();
+}
+
+void ListModel::deleteRows(QList<int> indexes)
+{
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT id FROM users ORDER BY id;");
+
+    QString ids;
+
+    for(const int& index : indexes)
+    {
+        if(ids.isEmpty() == true) ids = QString("%2").arg(QString::number(result.data[index].toInt()));
+        else ids = QString("%1, %2").arg(ids).arg(QString::number(result.data[index].toInt()));
+    }
+
+    QString query = QString("DELETE FROM users WHERE id IN (%1)").arg(ids);
+
+    beginRemoveRows(QModelIndex(), indexes[0], indexes[indexes.size() - 1]);
+
+    database->executeQuery(query);
+
+    endRemoveRows();
 }

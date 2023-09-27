@@ -36,15 +36,18 @@ SingleTableDatabase::~SingleTableDatabase()
     this->database.close();
 }
 
-QVariantList SingleTableDatabase::executeQuery(QString query)
+SingleTableDatabase::QueryExecutionResult SingleTableDatabase::executeQuery(QString query)
 {
-    QVariantList data;
+    SingleTableDatabase::QueryExecutionResult result;
+
     if(this->database.open() == true)
     {
         QSqlQuery sqlQuery;
 
         if(sqlQuery.exec(query))
         {
+            result.queryExecutionResult = true;
+
             while(sqlQuery.next() == true)
             {
                 QString row;
@@ -54,7 +57,7 @@ QVariantList SingleTableDatabase::executeQuery(QString query)
                     row += sqlQuery.value(i).toString();
                 }
 
-                data.append(row);
+                result.data.append(row);
             }
 
             if(query.contains("INSERT", Qt::CaseInsensitive) || query.contains("DELETE", Qt::CaseInsensitive))
@@ -70,5 +73,5 @@ QVariantList SingleTableDatabase::executeQuery(QString query)
         }
     }
 
-    return data;
+    return result;
 }

@@ -29,14 +29,38 @@ void MainWindow::on_addRowButton_clicked()
 {
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    database->executeQuery("INSERT INTO Users (ID, FirstName, LastName) VALUES (1, 'John', 'Doe');");
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT MAX(ID) FROM users;");
+
+    database->executeQuery(QString("INSERT INTO Users (id, first_name, last_name, email, gender) VALUES (%1, 'first', 'last', 'email', 'gender');").arg(result.data[0].toInt() + 1));
 }
 
 void MainWindow::on_deleteRowButton_clicked()
 {
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    database->executeQuery("DELETE FROM users WHERE ID = (SELECT MIN(ID) FROM users);");
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT id FROM users ORDER BY id;");
+
+    database->executeQuery(QString("DELETE FROM users WHERE id IN (%1, %2);").arg(result.data[0].toString()).arg(result.data[2].toString()));
+}
+
+void MainWindow::on_listModelAddRowButton_clicked()
+{
+    auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
+
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT MAX(ID) FROM users;");
+
+    if(listModel == nullptr) listModel = new ListModel(nullptr);
+
+    listModel->addRow({QString::number(result.data[0].toInt() + 1), "first", "second", "email", "gender"});
+}
+
+void MainWindow::on_listModelDeleteRowButton_clicked()
+{
+    auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
+
+    if(listModel == nullptr) listModel = new ListModel(nullptr);
+
+    listModel->deleteRows({0, 2});
 }
 
 void MainWindow::on_sqlTableViewButton_clicked()
@@ -116,16 +140,21 @@ void MainWindow::on_withoutModelButton_clicked()
     ui->sqlTableView->setHidden(true);
     ui->listWidget->setHidden(false);
 
+    ui->listWidget->clear();
+
     this->start = std::chrono::system_clock::now();
 
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    QVariantList data = database->executeQuery(QString("SELECT * FROM (SELECT id, first_name, last_name, email, gender, row_number()") +
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery(QString("SELECT * FROM (SELECT id, first_name, last_name, email, gender, row_number()") +
                                                QString(" OVER (order by id) AS row_num FROM users) t"));
 
-    for(const QVariant& row : data)
+    if(result.queryExecutionResult == true)
     {
-        ui->listWidget->addItem(row.toString());
+        for(const QVariant& row : result.data)
+        {
+            ui->listWidget->addItem(row.toString());
+        }
     }
 
     this->end = std::chrono::system_clock::now();

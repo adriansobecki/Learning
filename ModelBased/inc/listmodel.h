@@ -1,6 +1,4 @@
-#ifndef LISTMODEL_H
-#define LISTMODEL_H
-
+#pragma once
 #include <QAbstractListModel>
 
 class SingleTableDatabase;
@@ -17,9 +15,10 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
+    void addRow(QList<QString> data);
+    void deleteRows(QList<int> indexes);
+
 private:
     SingleTableDatabase* database {nullptr};
     QSet<int> selectedRows;
 };
-
-#endif // LISTMODEL_H

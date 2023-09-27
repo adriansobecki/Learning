@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include "listmodel.h"
@@ -23,6 +22,10 @@ private slots:
 
     void on_deleteRowButton_clicked();
 
+    void on_listModelAddRowButton_clicked();
+
+    void on_listModelDeleteRowButton_clicked();
+
     void on_sqlTableViewButton_clicked();
 
     void on_listViewButton_clicked();
@@ -39,4 +42,3 @@ private:
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
 };
-#endif // MAINWINDOW_H
