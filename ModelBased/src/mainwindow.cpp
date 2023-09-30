@@ -29,9 +29,9 @@ void MainWindow::on_addRowButton_clicked()
 {
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT MAX(ID) FROM users;");
+    QString query("INSERT INTO Users (first_name, last_name, email, gender) VALUES ('first', 'last', 'email', 'gender');");
 
-    database->executeQuery(QString("INSERT INTO Users (id, first_name, last_name, email, gender) VALUES (%1, 'first', 'last', 'email', 'gender');").arg(result.data[0].toInt() + 1));
+    database->executeQuery(query);
 }
 
 void MainWindow::on_deleteRowButton_clicked()
@@ -47,11 +47,9 @@ void MainWindow::on_listModelAddRowButton_clicked()
 {
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    SingleTableDatabase::QueryExecutionResult result = database->executeQuery("SELECT MAX(ID) FROM users;");
-
     if(listModel == nullptr) listModel = new ListModel(nullptr);
 
-    listModel->addRow({QString::number(result.data[0].toInt() + 1), "first", "second", "email", "gender"});
+    listModel->addRow({"first", "second", "email", "gender"});
 }
 
 void MainWindow::on_listModelDeleteRowButton_clicked()
@@ -104,6 +102,7 @@ void MainWindow::on_listViewButton_clicked()
     this->start = std::chrono::system_clock::now();
 
     this->listModel = new ListModel(nullptr);
+    
     ui->listView->setModel(listModel);
 
     this->end = std::chrono::system_clock::now();
@@ -146,8 +145,9 @@ void MainWindow::on_withoutModelButton_clicked()
 
     auto database = DatabasesManagement::getInstance().getDatabase("database.db", "users");
 
-    SingleTableDatabase::QueryExecutionResult result = database->executeQuery(QString("SELECT * FROM (SELECT id, first_name, last_name, email, gender, row_number()") +
-                                               QString(" OVER (order by id) AS row_num FROM users) t"));
+    QString query = "SELECT * FROM (SELECT row_number() OVER (order by id) AS row_num, * FROM users) t";
+
+    SingleTableDatabase::QueryExecutionResult result = database->executeQuery(query);
 
     if(result.queryExecutionResult == true)
     {

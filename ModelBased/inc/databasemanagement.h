@@ -22,15 +22,15 @@ public:
     int getNumberOfColumns() const { return numberOfColumns; };
 
 private:
-    SingleTableDatabase(QString databaseName, QString tableName);
+    SingleTableDatabase(QString database, QString table);
     SingleTableDatabase(const SingleTableDatabase&) = delete;
     SingleTableDatabase& operator=(const SingleTableDatabase&) = delete;
 
     QSqlDatabase database;
 
-    std::map<int, QString> columnIndexToString;
+    QList<QString> columnIndexToString;
 
-    QString tableName;
+    QString tableName, databaseName;
 
     int numberOfRows { 0 };
     int numberOfColumns { 0 };

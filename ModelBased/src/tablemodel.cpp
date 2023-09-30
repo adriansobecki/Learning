@@ -21,11 +21,12 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     if (index.isValid() == false) return QVariant();
 
     if (role == Qt::DisplayRole || role == Qt::EditRole)
-    {
-        //QVariantList data = database->executeQuery(QString("SELECT %1 FROM users WHERE ID = %2").arg(database->getColumnName(index.column())).arg(index.row()));
+    {   
+        QString query("SELECT %1 FROM (SELECT row_number() OVER (order by id) AS row_num, * FROM users) t WHERE row_num = %2");
+        
+        query = query.arg(database->getColumnName(index.column())).arg(index.row() + 1);
 
-        SingleTableDatabase::QueryExecutionResult result = database->executeQuery(QString("SELECT %1 FROM (SELECT id, first_name, last_name, email, gender, row_number()").arg(database->getColumnName(index.column())) +
-                                                   QString(" OVER (order by id) AS row_num FROM users) t WHERE row_num = %1").arg(index.row() + 1));
+        SingleTableDatabase::QueryExecutionResult result = database->executeQuery(query);
 
         if(result.queryExecutionResult == true && result.data.isEmpty() == false) return result.data.first();
     }
