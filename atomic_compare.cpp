@@ -9,7 +9,7 @@ enum Status
 {
     none = ( 0 << 0 ),
     newData = (1 << 1),
-	newRequest = ( 1 << 2 )
+    newRequest = ( 1 << 2 )
 };
 
 std::mutex mutex;
@@ -63,7 +63,6 @@ void atomicTest()
         //mutex.lock();
         int tmpStatus = status.load();
 
-        //status &= ~(Status::comPort | Status::nextPrintout);
         while (status.compare_exchange_weak(tmpStatus, tmpStatus & (~(Status::newData | Status::newRequest))) == false);
         //mutex.unlock();
         if(tmpStatus & Status::newData)
